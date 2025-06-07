@@ -2,13 +2,17 @@ from flask import Flask, jsonify, request, send_from_directory, redirect, sessio
 import os
 import random
 from dotenv import load_dotenv
-
+from flask_jwt_extended import create_access_token
+from datetime import timedelta
 from authlib.integrations.flask_client import OAuth
+from flask_jwt_extended import JWTManager
 
 load_dotenv()
 
 app = Flask(__name__, static_folder="static")
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "your-secret-key")
+app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "dev-secret")
+jwt = JWTManager(app)
 
 # Google OAuth 設定（✅ 改用 OpenID Connect 標準方式）
 oauth = OAuth(app)
@@ -36,19 +40,17 @@ def login_google():
 def authorize_google():
     try:
         token = oauth.google.authorize_access_token()
-        print("Access token:", token)
-
-        # 使用 userinfo() 正確獲取使用者資訊
+        # 正確取得 userinfo
         user = oauth.google.userinfo()
-        print("User info:", user)
+        email = user.get("email")
+        if not email:
+            return "登入失敗，缺少 email", 400
 
-        session["user"] = user
-        return redirect("http://localhost:3000/calculator")
+        # 把 email 傳回前端，讓前端直接用
+        return redirect(f"http://localhost:3000/oauth-callback?email={email}")
     except Exception as e:
         print("Google OAuth Error:", e)
         return "Google OAuth 登入失敗：" + str(e), 500
-
-
 
 @app.route("/api/user")
 def get_user():
