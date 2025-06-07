@@ -28,10 +28,18 @@ def get_fit_rate(capacity_kw, efficiency_level, city):
     for tier in fit_rate_table:
         max_kw = tier["max_kw"] if tier["max_kw"] is not None else float("inf")
         if tier["min_kw"] <= capacity_kw < max_kw:
-            base_rate = tier["high_eff"] if efficiency_level == "高效" else tier["standard"]
+            # 對四種等級進行分類
+            if efficiency_level in ["非常高效", "高效"]:
+                base_rate = tier["high_eff"]
+            else:  # 包含 "一般效率", "低效率"
+                base_rate = tier["standard"]
             break
+
+    # 預設值防呆（萬一容量不落在任一區間）
     if base_rate is None:
         base_rate = 3.5
+
+    # 地區加成
     bonus_ratio = region_bonus.get(city, 0)
     return round(base_rate * (1 + bonus_ratio), 4)
 
@@ -114,27 +122,12 @@ def recommend():
         except Exception as e:
             return jsonify({"error": f"公式計算錯誤: {str(e)}"}), 500
 
-        summary = f"""
-模組名稱：{mod["module_name"]}
-模組效率：{mod["efficiency_percent"]}%
-模組等級：{mod["efficiency_level"]}
-裝置容量：{round(local_vars["capacity_kw"], 2)} 瓩
-地點：{address}
-年發電量：約 {int(local_vars["annual_generation_kwh"])} 度
-建置成本：約 {int(local_vars["install_cost_ntd"])} 元
-年收入：約 {int(local_vars["annual_revenue_ntd"])} 元
-回本年限：約 {round(local_vars["payback_years"], 1)} 年
-"""
-
-        llm_result = generate_llm_outputs(summary)
-
         recommendation = {
-            "module_id": mod["module_id"],
             "module_name": mod["module_name"],
-            "efficiency_percent": mod["efficiency_percent"],
-            "efficiency_level": mod["efficiency_level"],
             "brand": mod["brand"],
             "type": mod["type"],
+            "efficiency_percent": mod["efficiency_percent"],
+            "efficiency_level": mod["efficiency_level"],
             "capacity_kw": round(local_vars["capacity_kw"], 2),
             "daily_kwh_per_kw": round(local_vars["daily_kwh_per_kw"], 2),
             "annual_generation_kwh": int(local_vars["annual_generation_kwh"]),
@@ -146,15 +139,39 @@ def recommend():
             "investment_projection_20yr": [
                 {"year": y, "value": round(-local_vars["install_cost_ntd"] + local_vars["annual_revenue_ntd"] * y)}
                 for y in range(1, 21)
-            ],
-            "final_recommendation": llm_result.get("final_recommendation", ""),
-            "score": llm_result.get("score", 0),
-            "explanation_text": llm_result.get("explanation_text", "")
+            ]
         }
 
         recommendations.append(recommendation)
 
     return jsonify({"recommendations": recommendations})
+
+@app.route("/api/llm_decision", methods=["POST"])
+def llm_decision():
+    data = request.json
+    required_fields = [
+        "module_name", "efficiency_percent", "efficiency_level",
+        "capacity_kw", "address", "annual_generation_kwh",
+        "install_cost_ntd", "annual_revenue_ntd", "payback_years"
+    ]
+    for field in required_fields:
+        if field not in data:
+            return jsonify({"error": f"Missing field: {field}"}), 400
+
+    summary = f"""
+模組名稱：{data['module_name']}
+模組效率：{data['efficiency_percent']}%
+模組等級：{data['efficiency_level']}
+裝置容量：{round(data['capacity_kw'], 2)} 瓩
+地點：{data['address']}
+年發電量：約 {int(data['annual_generation_kwh'])} 度
+建置成本：約 {int(data['install_cost_ntd'])} 元
+年收入：約 {int(data['annual_revenue_ntd'])} 元
+回本年限：約 {round(data['payback_years'], 1)} 年
+"""
+
+    result = generate_llm_outputs(summary)
+    return jsonify(result)
 
 if __name__ == "__main__":
     app.run(debug=True)
