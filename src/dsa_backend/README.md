@@ -1,3 +1,36 @@
+## 🔧 安裝與啟動
+
+### 1. 建立虛擬環境（推薦使用 Python 3.12）
+
+```bash
+python3.12 -m venv caca
+source caca/bin/activate
+```
+
+### 2. 安裝依賴套件
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. 設定環境變數（OpenAI API Key）
+
+你可以將以下內容加入 `.env` 檔案，或手動 export：
+
+```bash
+export OPENAI_API_KEY=your_openai_api_key
+```
+
+### 4. 啟動 Flask API
+
+```bash
+python app.py
+```
+
+伺服器將在 `http://localhost:5000` 運行。
+
+---
+
 ## 🔹 1. `POST /api/recommend`
 
 ### 📥 請求格式（JSON）
