@@ -1,0 +1,11 @@
+# 忽略 node_modules
+src/frontend/node_modules
+
+# 可選建議
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+.env
+.DS_Store

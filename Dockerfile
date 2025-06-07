@@ -1,24 +1,18 @@
-FROM python:3.10-slim
+# 建構階段
+FROM node:20 AS builder
 
 WORKDIR /app
 
-# 複製需求檔案
-COPY requirements.txt ./
+COPY src/frontend/ ./
 
-# 安裝依賴
-RUN pip install --no-cache-dir -r requirements.txt
+RUN npm install -g pnpm \
+    && pnpm install \
+    && pnpm run build
 
-# 複製專案檔案
-COPY . .
+# 部署階段
+FROM nginx:alpine
 
-# 切換工作目錄到 run.py 所在位置
-WORKDIR /app/src/backend
+COPY --from=builder /app/out /usr/share/nginx/html
 
-# 設定環境變數
-ENV FLASK_APP=run.py
-
-# 開放 port
-EXPOSE 8080
-
-# 啟動 Flask
-CMD ["python", "run.py"]
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
