@@ -3,24 +3,25 @@
 ## 專案架構
 
 ```
-solar-sdg/
-│
-├── app/
-│   ├── __init__.py
-│   ├── routes.py
-│   ├── models.py
-│   └── templates/
-│       └── index.html
-│
-├── static/
-│   └── (靜態檔案如 CSS, JS, 圖片)
-│
-├── config.py
-├── run.py
-└── README.md
+.
+├── data
+│   └── README.md
+├── docs
+│   └── README.md
+├── logs
+│   └── PLACEHOLDER
+├── README.md
+└── src
+    ├── backend
+    │   ├── app
+    │   │   ├── __init__.py
+    │   │   ├── models.py
+    │   │   ├── routes.py
+    │   │   └── templates
+    │   │       └── index.html
+    │   ├── config.py
+    │   ├── run.py
+    │   └── static
+    └── frontend
+        └── README.md
 ```
-
-- `app/`：Flask 應用程式主目錄
-- `static/`：靜態檔案
-- `config.py`：設定檔
-- `run.py`：啟動 Flask 應用程式
