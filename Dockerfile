@@ -13,8 +13,7 @@ COPY . .
 
 # 設定環境變數
 ENV FLASK_APP=run.py
-ENV FLASK_RUN_HOST=0.0.0.0
-ENV FLASK_RUN_PORT=${PORT:-8080}
+
 
 # 開放 port
 EXPOSE 8080
