@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Calculator, Sun, Phone, MapPin, Home, BarChart3, Lightbulb, LogOut, User } from "lucide-react"
+import { Slider } from "@/components/ui/slider"
 import SimulationResults from "@/components/simulation-results"
 import ContactForm from "@/components/contact-form"
 import PlanComparison from "@/components/plan-comparison"
@@ -21,6 +22,7 @@ interface SimulationData {
   electricityUsage: number
   roofType: string
   direction: string
+  riskTolerance: number
 }
 
 interface Results {
@@ -38,12 +40,15 @@ export default function SolarCalculator() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("calculator")
   const [user, setUser] = useState<{ email: string } | null>(null)
+
+  // 輸入ㄉ數據
   const [formData, setFormData] = useState<SimulationData>({
     location: "",
     roofArea: 0,
     electricityUsage: 0,
     roofType: "",
     direction: "",
+    riskTolerance: 50,
   })
   const [results, setResults] = useState<Results | null>(null)
   const [isCalculating, setIsCalculating] = useState(false)
@@ -165,6 +170,10 @@ export default function SolarCalculator() {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
+  const handleRiskTolerance = (field: keyof SimulationData, value: number) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+  
   const isFormValid =
     formData.location &&
     formData.roofArea > 0 &&
@@ -192,7 +201,7 @@ export default function SolarCalculator() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="fixed top-0 left-0 w-full z-50 bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -201,7 +210,6 @@ export default function SolarCalculator() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">太陽能投資計算器</h1>
-                <p className="text-sm text-gray-600">SDG 7 - 可負擔與潔淨能源</p>
               </div>
             </div>
 
@@ -231,23 +239,23 @@ export default function SolarCalculator() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="calculator" className="flex items-center space-x-2">
-              <Calculator className="h-4 w-4" />
+              <Calculator className="h-4 w-5" />
               <span>投資計算</span>
             </TabsTrigger>
-            <TabsTrigger value="results" className="flex items-center space-x-2">
+            {/* <TabsTrigger value="results" className="flex items-center space-x-2">
               <Sun className="h-4 w-4" />
               <span>模擬結果</span>
-            </TabsTrigger>
+            </TabsTrigger> */}
             <TabsTrigger value="recommend" className="flex items-center space-x-2">
-              <Lightbulb className="h-4 w-4" />
+              <Lightbulb className="h-4 w-5" />
               <span>智能推薦</span>
             </TabsTrigger>
             <TabsTrigger value="compare" className="flex items-center space-x-2">
-              <BarChart3 className="h-4 w-4" />
+              <BarChart3 className="h-4 w-5" />
               <span>方案比較</span>
             </TabsTrigger>
             <TabsTrigger value="contact" className="flex items-center space-x-2">
-              <Phone className="h-4 w-4" />
+              <Phone className="h-4 w-5" />
               <span>專員聯繫</span>
             </TabsTrigger>
           </TabsList>
@@ -268,11 +276,11 @@ export default function SolarCalculator() {
                     <div className="space-y-2">
                       <Label htmlFor="location" className="flex items-center space-x-2">
                         <MapPin className="h-4 w-4" />
-                        <span>所在地區</span>
+                        <span>所在縣/市</span>
                       </Label>
                       <Select onValueChange={(value) => handleInputChange("location", value)}>
                         <SelectTrigger>
-                          <SelectValue placeholder="選擇您的所在地區" />
+                          <SelectValue placeholder="選擇您的所在縣市" />
                         </SelectTrigger>
                         <SelectContent>
                           {taiwanCities.map((city) => (
@@ -282,6 +290,20 @@ export default function SolarCalculator() {
                           ))}
                         </SelectContent>
                       </Select>
+                      </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="location" className="flex items-center space-x-2">
+                        <MapPin className="h-4 w-4" />
+                        <span>所在區/里</span>
+                      </Label>
+                      <Input
+                        id="location"
+                        type="string"
+                        placeholder="例：中正區"
+                        value={formData.roofArea || ""}
+                        onChange={(e) => handleInputChange("roofArea", String(e.target.value))}
+                      />
                     </div>
 
                     <div className="space-y-2">
@@ -337,6 +359,25 @@ export default function SolarCalculator() {
                         </SelectContent>
                       </Select>
                     </div>
+
+                    <div className="space-y-3">
+                      <Label>風險承受度</Label>
+                      <div className="space-y-2">
+                        <Slider
+                          id="riskTolerance"
+                          value={typeof formData.riskTolerance === "number" ? [formData.riskTolerance] : [50]}
+                          onValueChange={(value) => handleInputChange("riskTolerance", value[0])}
+                          max={100}
+                          step={10}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between text-sm text-gray-600">
+                          <span>保守 (低風險)</span>
+                          <span className="font-medium">{formData.riskTolerance}%</span>
+                          <span>積極 (高風險)</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <Button
@@ -373,7 +414,7 @@ export default function SolarCalculator() {
           <TabsContent value="recommend">
             <SmartRecommendation
               onRecommendationSelect={(recommendation) => {
-                setFormData(recommendation.formData)
+                setFormData({ ...recommendation.formData, riskTolerance: (recommendation.formData as SimulationData).riskTolerance || 50 })
                 setResults(recommendation.results)
                 setActiveTab("results")
               }}
@@ -385,7 +426,7 @@ export default function SolarCalculator() {
               savedPlans={savedPlans}
               onDeletePlan={deletePlan}
               onSelectPlan={(plan) => {
-                setFormData(plan.formData)
+                setFormData({ ...plan.formData, riskTolerance:(plan.formData as SimulationData).riskTolerance || 50 })
                 setResults(plan.results)
                 setActiveTab("results")
               }}

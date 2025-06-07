@@ -299,16 +299,6 @@ export default function SolarMap({ selectedLocation }: SolarMapProps) {
         </Card>
       )}
 
-      {/* 實際 Google Maps 整合說明 */}
-      <Card className="border-dashed">
-        <CardContent className="p-4">
-          <div className="text-center text-sm text-gray-600">
-            <p className="font-medium mb-1">🗺️ Google Maps 整合</p>
-            <p>實際部署時將整合真實的 Google Maps API</p>
-            <p>顯示精確位置、衛星圖像和太陽能潛力熱力圖</p>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }

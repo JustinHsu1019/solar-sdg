@@ -269,82 +269,82 @@ export default function SmartRecommendation({ onRecommendationSelect }: SmartRec
     return new Intl.NumberFormat("zh-TW").format(num)
   }
 
-  if (step === 1) {
-    return (
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Lightbulb className="h-5 w-5" />
-              <span>智能推薦系統</span>
-            </CardTitle>
-            <CardDescription>告訴我們您的需求和偏好，我們將為您推薦最適合的太陽能板投資方案</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="location">所在地區</Label>
-                <Select onValueChange={(value) => setPreferences((prev) => ({ ...prev, location: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="選擇您的所在地區" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {taiwanCities.map((city) => (
-                      <SelectItem key={city} value={city}>
-                        {city}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+  // if (step === 1) {
+  //   return (
+  //     <div className="space-y-6">
+  //       <Card>
+  //         <CardHeader>
+  //           <CardTitle className="flex items-center space-x-2">
+  //             <Lightbulb className="h-5 w-5" />
+  //             <span>智能推薦系統</span>
+  //           </CardTitle>
+  //           <CardDescription>告訴我們您的需求和偏好，我們將為您推薦最適合的太陽能板投資方案</CardDescription>
+  //         </CardHeader>
+  //         <CardContent className="space-y-6">
+  //           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  //             <div className="space-y-2">
+  //               <Label htmlFor="location">所在地區</Label>
+  //               <Select onValueChange={(value) => setPreferences((prev) => ({ ...prev, location: value }))}>
+  //                 <SelectTrigger>
+  //                   <SelectValue placeholder="選擇您的所在地區" />
+  //                 </SelectTrigger>
+  //                 <SelectContent>
+  //                   {taiwanCities.map((city) => (
+  //                     <SelectItem key={city} value={city}>
+  //                       {city}
+  //                     </SelectItem>
+  //                   ))}
+  //                 </SelectContent>
+  //               </Select>
+  //             </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="budget">預算範圍 (萬元)</Label>
-                <Input
-                  id="budget"
-                  type="number"
-                  placeholder="例：50 (0表示無預算限制)"
-                  value={preferences.budget || ""}
-                  onChange={(e) => setPreferences((prev) => ({ ...prev, budget: Number(e.target.value) * 10000 }))}
-                />
-              </div>
+  //             <div className="space-y-2">
+  //               <Label htmlFor="budget">預算範圍 (萬元)</Label>
+  //               <Input
+  //                 id="budget"
+  //                 type="number"
+  //                 placeholder="例：50 (0表示無預算限制)"
+  //                 value={preferences.budget || ""}
+  //                 onChange={(e) => setPreferences((prev) => ({ ...prev, budget: Number(e.target.value) * 10000 }))}
+  //               />
+  //             </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="roofArea">屋頂面積 (平方米)</Label>
-                <Input
-                  id="roofArea"
-                  type="number"
-                  placeholder="例：50"
-                  value={preferences.roofArea || ""}
-                  onChange={(e) => setPreferences((prev) => ({ ...prev, roofArea: Number(e.target.value) }))}
-                />
-              </div>
+  //             <div className="space-y-2">
+  //               <Label htmlFor="roofArea">屋頂面積 (平方米)</Label>
+  //               <Input
+  //                 id="roofArea"
+  //                 type="number"
+  //                 placeholder="例：50"
+  //                 value={preferences.roofArea || ""}
+  //                 onChange={(e) => setPreferences((prev) => ({ ...prev, roofArea: Number(e.target.value) }))}
+  //               />
+  //             </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="electricityUsage">月平均用電量 (度)</Label>
-                <Input
-                  id="electricityUsage"
-                  type="number"
-                  placeholder="例：300"
-                  value={preferences.electricityUsage || ""}
-                  onChange={(e) => setPreferences((prev) => ({ ...prev, electricityUsage: Number(e.target.value) }))}
-                />
-              </div>
-            </div>
+  //             <div className="space-y-2">
+  //               <Label htmlFor="electricityUsage">月平均用電量 (度)</Label>
+  //               <Input
+  //                 id="electricityUsage"
+  //                 type="number"
+  //                 placeholder="例：300"
+  //                 value={preferences.electricityUsage || ""}
+  //                 onChange={(e) => setPreferences((prev) => ({ ...prev, electricityUsage: Number(e.target.value) }))}
+  //               />
+  //             </div>
+  //           </div>
 
-            <Button
-              onClick={() => setStep(2)}
-              disabled={!preferences.location || !preferences.roofArea || !preferences.electricityUsage}
-              className="w-full bg-orange-500 hover:bg-orange-600"
-              size="lg"
-            >
-              下一步：設定投資偏好
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+  //           <Button
+  //             onClick={() => setStep(2)}
+  //             disabled={!preferences.location || !preferences.roofArea || !preferences.electricityUsage}
+  //             className="w-full bg-orange-500 hover:bg-orange-600"
+  //             size="lg"
+  //           >
+  //             下一步：設定投資偏好
+  //           </Button>
+  //         </CardContent>
+  //       </Card>
+  //     </div>
+  //   )
+  // }
 
   if (step === 2) {
     return (

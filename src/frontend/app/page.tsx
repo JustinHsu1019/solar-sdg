@@ -30,14 +30,8 @@ export default function HomePage() {
   return (
     <div className="min-h-screen flex">
       {/* 左側 - Logo 和登入區域 */}
-      <div className="flex-1 flex flex-col justify-center items-center bg-gradient-to-br from-orange-50 to-yellow-50 p-8 relative overflow-hidden">
+      <div className="basis-2/5 flex-1 flex flex-col justify-center items-center bg-gradient-to-br p-8 relative overflow-hidden">
         {/* 背景裝飾 */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-20 w-32 h-32 bg-orange-300 rounded-full blur-xl"></div>
-          <div className="absolute bottom-32 right-16 w-24 h-24 bg-yellow-300 rounded-full blur-xl"></div>
-          <div className="absolute top-1/2 left-1/4 w-16 h-16 bg-orange-400 rounded-full blur-lg"></div>
-        </div>
-
         <div className="relative z-10 max-w-md w-full space-y-8">
           {/* Logo 區域 */}
           <div className="text-center space-y-4">
@@ -111,9 +105,9 @@ export default function HomePage() {
       </div>
 
       {/* 右側 - 背景照片 */}
-      <div className="flex-1 relative overflow-hidden">
+      <div className="basis-3/5 flex-1 relative overflow-hidden">
         <Image
-          src="/placeholder.svg?height=1080&width=1080"
+          src="/main_solar.png"
           alt="太陽能板安裝"
           fill
           className="object-cover"
