@@ -1,4 +1,3 @@
-//首頁！
 "use client"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -11,40 +10,60 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
 
+  const mockUserInput = {
+    location_city: "台南市",
+    location_dist: "東區",
+    roofArea: 40,
+    electricityUsage: 350,
+    roofType: "flat",
+    direction: "south",
+    riskTolerance: 60,
+  }
+
   const handleLogin = async () => {
     setIsLoading(true)
 
-    // 模擬登入過程
+    // ✅ 模擬登入過程
     await new Promise((resolve) => setTimeout(resolve, 1500))
-
-    setIsSuccess(true)
     localStorage.setItem("isLoggedIn", "true")
     localStorage.setItem("user", JSON.stringify({ email: "user@example.com" }))
 
-    // 成功動畫後跳轉
+    setIsSuccess(true)
+
+    // ✅ 模擬將資料送出給後端 API（可以換成真正的 fetch）
+    await fakeSendToBackend(mockUserInput)
+
+    // ✅ 儲存輸入資料到 sessionStorage 以便 calculator 使用
+    sessionStorage.setItem("formData", JSON.stringify(mockUserInput))
+    sessionStorage.setItem("startTab", "recommend")
+
+    // ✅ 動畫後跳轉
     setTimeout(() => {
-      router.push("/calculator")
+      window.location.href = "/calculator"
     }, 2000)
   }
 
+  // ✅ 模擬 API 呼叫
+  const fakeSendToBackend = async (data: any) => {
+    console.log("📡 Sending data to backend:", data)
+    await new Promise((resolve) => setTimeout(resolve, 1000)) // 模擬等待
+    console.log("✅ Data sent successfully")
+  }
+
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex ">
       {/* 左側 - Logo 和登入區域 */}
-      <div className="basis-2/5 flex-1 flex flex-col justify-center items-center bg-gradient-to-br p-8 relative overflow-hidden">
-        {/* 背景裝飾 */}
+      <div className="basis-2/5 flex-1 flex flex-col justify-center items-center p-8 relative overflow-hidden">
         <div className="relative z-10 max-w-md w-full space-y-8">
-          {/* Logo 區域 */}
           <div className="text-center space-y-4">
             <div className="flex justify-center">
               <div className="bg-gradient-to-r from-orange-500 to-yellow-500 p-4 rounded-2xl shadow-lg">
                 <Sun className="h-12 w-12 text-white" />
               </div>
             </div>
-            <div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">太陽能板平台</h1>
-              <p className="text-lg text-gray-600">SDG 7 - 可負擔與潔淨能源</p>
-              <p className="text-sm text-gray-500 mt-2">智能評估您的太陽能投資回報</p>
-            </div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">太陽能板平台</h1>
+            <p className="text-lg text-gray-600">SDG 7 - 可負擔與潔淨能源</p>
+            <p className="text-sm text-gray-500 mt-2">智能評估您的太陽能投資回報</p>
           </div>
 
           {/* 登入區域 */}
@@ -75,28 +94,19 @@ export default function HomePage() {
                     <CheckCircle className="h-8 w-8 text-green-500 animate-pulse" />
                   </div>
                 </div>
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900">登入成功！</h3>
-                  <p className="text-sm text-gray-600 mt-1">正在為您準備太陽能計算器...</p>
-                </div>
+                <h3 className="text-lg font-medium text-gray-900">登入成功！</h3>
+                <p className="text-sm text-gray-600 mt-1">正在為您準備太陽能計算器...</p>
                 <div className="flex justify-center">
                   <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce"></div>
-                    <div
-                      className="w-2 h-2 bg-orange-500 rounded-full animate-bounce"
-                      style={{ animationDelay: "0.1s" }}
-                    ></div>
-                    <div
-                      className="w-2 h-2 bg-orange-500 rounded-full animate-bounce"
-                      style={{ animationDelay: "0.2s" }}
-                    ></div>
+                    <div className="w-2 h-2 bg-[#FAC796] rounded-full animate-bounce" />
+                    <div className="w-2 h-2 bg-[#FAC796] rounded-full animate-bounce delay-100" />
+                    <div className="w-2 h-2 bg-[#FAC796] rounded-full animate-bounce delay-200" />
                   </div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* 底部資訊 */}
           <div className="text-center text-xs text-gray-500 space-y-1">
             <p>© 2025 太陽能板平台</p>
             <p>專業的太陽能投資評估工具</p>
@@ -113,31 +123,23 @@ export default function HomePage() {
           className="object-cover"
           priority
         />
-
-        {/* 照片上的漸層遮罩 */}
         <div className="absolute inset-0 bg-gradient-to-l from-transparent via-black/10 to-black/30"></div>
-
-        {/* 照片上的文字 */}
         <div className="absolute bottom-8 left-8 text-white space-y-2">
           <h2 className="text-2xl font-bold">綠色能源，智慧投資</h2>
           <p className="text-lg opacity-90">讓太陽為您創造持續收益</p>
         </div>
-
-        {/* 浮動的太陽能數據卡片 */}
         <div className="absolute top-8 right-8 bg-white/90 backdrop-blur-sm rounded-xl p-4 shadow-lg">
           <div className="text-center space-y-1">
             <p className="text-xs text-gray-600">平均年節省</p>
             <p className="text-lg font-bold text-green-600">$45,000</p>
           </div>
         </div>
-
         <div className="absolute top-32 right-16 bg-white/90 backdrop-blur-sm rounded-xl p-4 shadow-lg">
           <div className="text-center space-y-1">
             <p className="text-xs text-gray-600">回本年限</p>
             <p className="text-lg font-bold text-orange-600">7-10年</p>
           </div>
         </div>
-
         <div className="absolute bottom-32 right-8 bg-white/90 backdrop-blur-sm rounded-xl p-4 shadow-lg">
           <div className="text-center space-y-1">
             <p className="text-xs text-gray-600">年減碳量</p>

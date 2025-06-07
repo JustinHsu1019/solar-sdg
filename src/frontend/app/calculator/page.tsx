@@ -17,6 +17,8 @@ import SmartRecommendation from "@/components/smart-recommendation"
 import SolarMap from "@/components/solar-map"
 
 interface SimulationData {
+  location_city: string
+  location_dist: string
   location: string
   roofArea: number
   electricityUsage: number
@@ -41,8 +43,9 @@ export default function SolarCalculator() {
   const [activeTab, setActiveTab] = useState("calculator")
   const [user, setUser] = useState<{ email: string } | null>(null)
 
-  // 輸入ㄉ數據
   const [formData, setFormData] = useState<SimulationData>({
+    location_city: "",
+    location_dist: "",
     location: "",
     roofArea: 0,
     electricityUsage: 0,
@@ -88,16 +91,34 @@ export default function SolarCalculator() {
   ]
 
   useEffect(() => {
-    // 檢查用戶是否已登入
     const isLoggedIn = localStorage.getItem("isLoggedIn") === "true"
     const userData = localStorage.getItem("user")
-
+    const storedFormData = sessionStorage.getItem("formData")
+    const startTab = sessionStorage.getItem("startTab")
+  
     if (!isLoggedIn) {
       router.push("/")
     } else if (userData) {
       setUser(JSON.parse(userData))
     }
+  
+    if (storedFormData) {
+      try {
+        const parsedForm = JSON.parse(storedFormData)
+        setFormData((prev) => ({
+          ...prev,
+          ...parsedForm,
+        }))
+      } catch (error) {
+        console.error("❌ 無法解析儲存的 formData", error)
+      }
+    }
+  
+    if (startTab) {
+      setActiveTab(startTab)
+    }
   }, [router])
+  
 
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn")
@@ -105,77 +126,79 @@ export default function SolarCalculator() {
     router.push("/")
   }
 
-  const calculateSolarPotential = async () => {
-    setIsCalculating(true)
+  const handleInput = async () => {
+    // setIsCalculating(true)
 
-    // 模擬計算邏輯
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    // // 模擬計算邏輯
+    // await new Promise((resolve) => setTimeout(resolve, 2000))
 
-    // 基於地區的日照時數係數
-    const sunlightCoefficient = {
-      台南市: 1.2,
-      高雄市: 1.15,
-      屏東縣: 1.18,
-      台東縣: 1.1,
-      台中市: 1.0,
-      彰化縣: 1.05,
-      雲林縣: 1.08,
-      嘉義市: 1.1,
-      台北市: 0.85,
-      新北市: 0.88,
-      基隆市: 0.8,
-      宜蘭縣: 0.82,
-    }
+    // // 基於地區的日照時數係數
+    // const sunlightCoefficient = {
+    //   台南市: 1.2,
+    //   高雄市: 1.15,
+    //   屏東縣: 1.18,
+    //   台東縣: 1.1,
+    //   台中市: 1.0,
+    //   彰化縣: 1.05,
+    //   雲林縣: 1.08,
+    //   嘉義市: 1.1,
+    //   台北市: 0.85,
+    //   新北市: 0.88,
+    //   基隆市: 0.8,
+    //   宜蘭縣: 0.82,
+    // }
 
-    const coefficient = sunlightCoefficient[formData.location as keyof typeof sunlightCoefficient] || 0.95
+    // const coefficient = sunlightCoefficient[formData.location_city as keyof typeof sunlightCoefficient] || 0.95
 
-    // 屋頂方向係數
-    const directionCoefficient = {
-      south: 1.0,
-      southeast: 0.95,
-      southwest: 0.95,
-      east: 0.85,
-      west: 0.85,
-      north: 0.7,
-    }
+    // // 屋頂方向係數
+    // const directionCoefficient = {
+    //   south: 1.0,
+    //   southeast: 0.95,
+    //   southwest: 0.95,
+    //   east: 0.85,
+    //   west: 0.85,
+    //   north: 0.7,
+    // }
 
-    const dirCoeff = directionCoefficient[formData.direction as keyof typeof directionCoefficient] || 0.9
+    // const dirCoeff = directionCoefficient[formData.direction as keyof typeof directionCoefficient] || 0.9
 
-    // 計算結果
-    const systemSize = formData.roofArea * 0.15 // 每平方米約0.15kW
-    const annualGeneration = systemSize * 1200 * coefficient * dirCoeff // 年發電量
-    const installationCost = systemSize * 45000 // 每kW約4.5萬元
-    const annualSavings = annualGeneration * 3.2 // 每度電約3.2元
-    const paybackPeriod = installationCost / annualSavings
-    const totalProfit = annualSavings * 20 - installationCost // 20年總獲益
-    const carbonReduction = annualGeneration * 0.554 // 每度電減少0.554kg CO2
-    const suitabilityScore = Math.min(100, coefficient * dirCoeff * 100)
+    // // 計算結果
+    // const systemSize = formData.roofArea * 0.15 // 每平方米約0.15kW
+    // const annualGeneration = systemSize * 1200 * coefficient * dirCoeff // 年發電量
+    // const installationCost = systemSize * 45000 // 每kW約4.5萬元
+    // const annualSavings = annualGeneration * 3.2 // 每度電約3.2元
+    // const paybackPeriod = installationCost / annualSavings
+    // const totalProfit = annualSavings * 20 - installationCost // 20年總獲益
+    // const carbonReduction = annualGeneration * 0.554 // 每度電減少0.554kg CO2
+    // const suitabilityScore = Math.min(100, coefficient * dirCoeff * 100)
 
-    const calculatedResults: Results = {
-      suitable: suitabilityScore > 60,
-      installationCost: Math.round(installationCost),
-      annualGeneration: Math.round(annualGeneration),
-      annualSavings: Math.round(annualSavings),
-      paybackPeriod: Math.round(paybackPeriod * 10) / 10,
-      totalProfit: Math.round(totalProfit),
-      carbonReduction: Math.round(carbonReduction),
-      suitabilityScore: Math.round(suitabilityScore),
-    }
+    // const calculatedResults: Results = {
+    //   suitable: suitabilityScore > 60,
+    //   installationCost: Math.round(installationCost),
+    //   annualGeneration: Math.round(annualGeneration),
+    //   annualSavings: Math.round(annualSavings),
+    //   paybackPeriod: Math.round(paybackPeriod * 10) / 10,
+    //   totalProfit: Math.round(totalProfit),
+    //   carbonReduction: Math.round(carbonReduction),
+    //   suitabilityScore: Math.round(suitabilityScore),
+    // }
 
-    setResults(calculatedResults)
-    setIsCalculating(false)
+    // setResults(calculatedResults)
+    // setIsCalculating(false)
+
+    // 存資料到sessionStorage
+    sessionStorage.setItem("formData", JSON.stringify(formData))
+    sessionStorage.setItem("startTab", "recommend")
+    setActiveTab("recommend")
   }
 
   const handleInputChange = (field: keyof SimulationData, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
-
-  const handleRiskTolerance = (field: keyof SimulationData, value: number) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
   
   const isFormValid =
-    formData.location &&
+    formData.location_city &&
+    formData.location_dist &&
     formData.roofArea > 0 &&
     formData.electricityUsage > 0 &&
     formData.roofType &&
@@ -199,13 +222,13 @@ export default function SolarCalculator() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50">
+    <div className="min-h-screen bg-[#fffcf6] from-orange-50 to-yellow-50">
       {/* Header */}
       <header className="fixed top-0 left-0 w-full z-50 bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="bg-orange-500 p-2 rounded-lg">
+              <div className="bg-[#ffb875] p-2 rounded-lg">
                 <Sun className="h-6 w-6 text-white" />
               </div>
               <div>
@@ -235,30 +258,42 @@ export default function SolarCalculator() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="pt-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="calculator" className="flex items-center space-x-2">
-              <Calculator className="h-4 w-5" />
-              <span>投資計算</span>
+          <TabsList className="flex flex-wrap justify-between gap-3 bg-[#fffcf6] p-4 rounded-xl h-20">
+            <TabsTrigger
+              value="calculator"
+              className="flex-1 min-w-[160px] flex flex-col items-center justify-center border rounded-lg px-4 py-3 transition-all duration-200 hover:bg-white hover:shadow-sm data-[state=active]:bg-white data-[state=active]:border-orange-500 data-[state=active]:shadow-lg data-[state=active]:text-orange-600"
+            >
+              <Calculator className="h-5 w-5 mb-1" />
+              <span className="font-semibold">輸入資訊</span>
             </TabsTrigger>
-            {/* <TabsTrigger value="results" className="flex items-center space-x-2">
+
+            <TabsTrigger
+              value="recommend"
+              className="flex-1 min-w-[160px] flex flex-col items-center justify-center border rounded-lg px-4 py-3 transition-all duration-200 hover:bg-white hover:shadow-sm data-[state=active]:bg-white data-[state=active]:border-orange-500 data-[state=active]:shadow-lg data-[state=active]:text-orange-600"
+            >
+              <Lightbulb className="h-5 w-5 mb-1" />
+              <span className="font-semibold">智能推薦</span>
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="compare"
+              className="flex-1 min-w-[160px] flex flex-col items-center justify-center border rounded-lg px-4 py-3 transition-all duration-200 hover:bg-white hover:shadow-sm data-[state=active]:bg-white data-[state=active]:border-orange-500 data-[state=active]:shadow-lg data-[state=active]:text-orange-600"
+            >
+              <BarChart3 className="h-5 w-5 mb-1" />
+              <span className="font-semibold">方案比較</span>
+            </TabsTrigger>
+          </TabsList>
+
+           {/* <TabsTrigger value="results" className="flex items-center space-x-2">
               <Sun className="h-4 w-4" />
               <span>模擬結果</span>
             </TabsTrigger> */}
-            <TabsTrigger value="recommend" className="flex items-center space-x-2">
-              <Lightbulb className="h-4 w-5" />
-              <span>智能推薦</span>
-            </TabsTrigger>
-            <TabsTrigger value="compare" className="flex items-center space-x-2">
-              <BarChart3 className="h-4 w-5" />
-              <span>方案比較</span>
-            </TabsTrigger>
-            <TabsTrigger value="contact" className="flex items-center space-x-2">
+            {/* <TabsTrigger value="contact" className="flex items-center space-x-2">
               <Phone className="h-4 w-5" />
               <span>專員聯繫</span>
-            </TabsTrigger>
-          </TabsList>
+            </TabsTrigger> */}
 
           <TabsContent value="calculator" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -274,11 +309,11 @@ export default function SolarCalculator() {
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-1 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="location" className="flex items-center space-x-2">
+                      <Label htmlFor="location_city" className="flex items-center space-x-2">
                         <MapPin className="h-4 w-4" />
                         <span>所在縣/市</span>
                       </Label>
-                      <Select onValueChange={(value) => handleInputChange("location", value)}>
+                      <Select onValueChange={(value) => handleInputChange("location_city", value)}>
                         <SelectTrigger>
                           <SelectValue placeholder="選擇您的所在縣市" />
                         </SelectTrigger>
@@ -293,16 +328,16 @@ export default function SolarCalculator() {
                       </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="location" className="flex items-center space-x-2">
+                      <Label htmlFor="location_dist" className="flex items-center space-x-2">
                         <MapPin className="h-4 w-4" />
                         <span>所在區/里</span>
                       </Label>
                       <Input
-                        id="location"
+                        id="location_dist"
                         type="string"
                         placeholder="例：中正區"
-                        value={formData.roofArea || ""}
-                        onChange={(e) => handleInputChange("roofArea", String(e.target.value))}
+                        value={formData.location_dist || ""}
+                        onChange={(e) => handleInputChange("location_dist", String(e.target.value))}
                       />
                     </div>
 
@@ -381,9 +416,9 @@ export default function SolarCalculator() {
                   </div>
 
                   <Button
-                    onClick={calculateSolarPotential}
+                    onClick={handleInput}
                     disabled={!isFormValid || isCalculating}
-                    className="w-full bg-orange-500 hover:bg-orange-600"
+                    className="w-full bg-[#ff9a6b] hover:bg-[#df7e51]"
                     size="lg"
                   >
                     {isCalculating ? "計算中..." : "開始計算投資回報"}
@@ -392,7 +427,7 @@ export default function SolarCalculator() {
               </Card>
 
               {/* 右側：地圖 */}
-              <SolarMap selectedLocation={formData.location} />
+              <SolarMap selectedLocation={`${formData.location_city}${formData.location_dist}`} />
             </div>
           </TabsContent>
 
@@ -412,9 +447,16 @@ export default function SolarCalculator() {
           </TabsContent>
 
           <TabsContent value="recommend">
+            {/*智能推薦  待修*/}
             <SmartRecommendation
               onRecommendationSelect={(recommendation) => {
-                setFormData({ ...recommendation.formData, riskTolerance: (recommendation.formData as SimulationData).riskTolerance || 50 })
+                setFormData({
+                                  ...recommendation.formData,
+                                  location_city: (recommendation.formData as SimulationData).location_city || "",
+                                  location_dist: (recommendation.formData as SimulationData).location_dist || "",
+                                  location: (recommendation.formData as SimulationData).location || "",
+                                  riskTolerance: (recommendation.formData as SimulationData).riskTolerance || 50,
+                                })
                 setResults(recommendation.results)
                 setActiveTab("results")
               }}
@@ -425,17 +467,23 @@ export default function SolarCalculator() {
             <PlanComparison
               savedPlans={savedPlans}
               onDeletePlan={deletePlan}
-              onSelectPlan={(plan) => {
-                setFormData({ ...plan.formData, riskTolerance:(plan.formData as SimulationData).riskTolerance || 50 })
-                setResults(plan.results)
-                setActiveTab("results")
+              onPlanSelect={(plan) => {
+                setFormData({
+                  ...plan.formData,
+                  location_city: plan.formData.location_city || "",
+                  location_dist: plan.formData.location_dist || "",
+                  location: plan.formData.location || "",
+                  riskTolerance: plan.formData.riskTolerance || 50,
+                });
+                setResults(plan.results);
+                setActiveTab("results");
               }}
             />
           </TabsContent>
 
-          <TabsContent value="contact">
+          {/* <TabsContent value="contact">
             <ContactForm />
-          </TabsContent>
+          </TabsContent> */}
         </Tabs>
       </main>
     </div>
