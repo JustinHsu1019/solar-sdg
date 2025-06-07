@@ -14,9 +14,10 @@ COPY . .
 # 設定環境變數
 ENV FLASK_APP=run.py
 ENV FLASK_RUN_HOST=0.0.0.0
+ENV FLASK_RUN_PORT=${PORT:-8080}
 
 # 開放 port
-EXPOSE 5000
+EXPOSE 8080
 
 # 啟動 Flask
-CMD ["flask", "run"]
+CMD ["flask", "run", "--host=0.0.0.0", "--port=8080"]
