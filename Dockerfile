@@ -21,4 +21,4 @@ ENV FLASK_APP=run.py
 EXPOSE 8080
 
 # 啟動 Flask
-CMD ["flask", "run.py"]
+CMD ["python", "run.py"]
