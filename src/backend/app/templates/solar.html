@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>屋頂日照計算</title>
+</head>
+<body>
+    <h1>屋頂日照計算</h1>
+    <form method="post">
+        <label for="area">請輸入屋頂面積 (平方公尺):</label>
+        <input type="number" id="area" name="area" step="0.01" min="0" required>
+        <br><br>
+        <label>請在地圖上選擇您的位置：</label>
+        <div id="map" style="height: 400px; width: 100%;"></div>
+        <input type="hidden" id="lat" name="lat">
+        <input type="hidden" id="lng" name="lng">
+        <br>
+        <button type="submit">計算</button>
+    </form>
+    {% if result %}
+        <p>{{ result }}</p>
+    {% endif %}
+    <a href="/">回首頁</a>
+    <script>
+        let map;
+        let marker;
+        // 假設這是後端傳來的日照資料（可用 Jinja2 傳遞）
+        const solarData = [
+            {lat: 25.033964, lng: 121.564468, value: 1400, name: "台北101"},
+            {lat: 25.0478, lng: 121.5319, value: 1420, name: "台北車站"},
+            {lat: 24.147736, lng: 120.673648, value: 1550, name: "台中"},
+            {lat: 23.69781, lng: 120.960515, value: 1600, name: "台灣中心"},
+            {lat: 22.627278, lng: 120.301435, value: 1700, name: "高雄"},
+            {lat: 22.9911, lng: 120.2057, value: 1680, name: "台南"},
+            {lat: 24.80395, lng: 120.9647, value: 1500, name: "新竹"},
+            {lat: 23.4801, lng: 120.4491, value: 1580, name: "嘉義"},
+            // ...可繼續加入更多地點...
+        ];
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 23.69781, lng: 120.960515 }, // 台灣中心
+                zoom: 8,
+            });
+            map.addListener("click", (e) => {
+                placeMarker(e.latLng, map);
+            });
+
+            // Heatmap 資料轉換
+            const heatmapData = solarData.map(point => ({
+                location: new google.maps.LatLng(point.lat, point.lng),
+                weight: point.value
+            }));
+
+            // 建立 HeatmapLayer
+            const heatmap = new google.maps.visualization.HeatmapLayer({
+                data: heatmapData,
+                map: map,
+                radius: 40
+            });
+        }
+        function placeMarker(location, map) {
+            if (marker) {
+                marker.setPosition(location);
+            } else {
+                marker = new google.maps.Marker({
+                    position: location,
+                    map: map,
+                });
+            }
+            document.getElementById("lat").value = location.lat();
+            document.getElementById("lng").value = location.lng();
+        }
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCth-QCowG2tCmZ02JHPDPhMYcYLUyEfiA&libraries=visualization&callback=initMap"
+        async defer></script>
+</body>
+</html>
