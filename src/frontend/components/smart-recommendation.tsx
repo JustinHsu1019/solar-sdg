@@ -1,15 +1,18 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card, CardContent, CardDescription, CardHeader, CardTitle,
+} from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import InvestmentChart from "@/components/investment-chart"
 import { Star } from "lucide-react"
-import { Save } from "lucide-react"
-
+import { PiFunnelBold } from "react-icons/pi";
 interface RecommendationResult {
   id: string
   name: string
@@ -30,9 +33,6 @@ interface RecommendationResult {
     carbonReduction: number
   }
   matchScore: number
-  pros: string[]
-  cons: string[]
-  recommendation: string
   module_name: string
   payback_years: number
   type: string
@@ -50,10 +50,15 @@ interface SmartRecommendationProps {
   onSavePlan?: (planName: string, planData: RecommendationResult) => void
 }
 
-export default function SmartRecommendation({ onRecommendationSelect, onSavePlan }: SmartRecommendationProps) {
+export default function SmartRecommendation({
+  onRecommendationSelect,
+  onSavePlan,
+}: SmartRecommendationProps) {
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [planName, setPlanName] = useState("")
   const [converted, setConverted] = useState<RecommendationResult[]>([])
+  const [selectedChartPlan, setSelectedChartPlan] = useState<RecommendationResult | null>(null)
+  const [sortBy, setSortBy] = useState("matchScore")
   const [aiResult, setAiResult] = useState<{
     [id: string]: {
       final_recommendation: string
@@ -61,6 +66,26 @@ export default function SmartRecommendation({ onRecommendationSelect, onSavePlan
       explanation_text: string
     }
   }>({})
+
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat("zh-TW", {
+      style: "currency",
+      currency: "TWD",
+      minimumFractionDigits: 0,
+    }).format(amount)
+
+  const calculateCompatibility = (
+    efficiencyPercent: number,
+    riskTolerance: number
+  ): number => {
+    const minEff = 16.5
+    const maxEff = 23.6
+    let normalizedEff = (efficiencyPercent - minEff) / (maxEff - minEff)
+    normalizedEff = Math.max(0, Math.min(1, normalizedEff))
+    const riskToleranceNormalized = riskTolerance / 100
+    const compatibilityScore = 1 - Math.abs(normalizedEff - riskToleranceNormalized)
+    return Math.round(compatibilityScore * 100 * 100) / 100
+  }
 
   useEffect(() => {
     const rawData = localStorage.getItem("data")
@@ -97,38 +122,26 @@ export default function SmartRecommendation({ onRecommendationSelect, onSavePlan
         carbonReduction: parseFloat((item.annual_generation_kwh * 0.5).toFixed(1)),
         installationCost: item.install_cost_ntd,
       },
-      matchScore: calculateCompatibility(item.efficiency_percent, data.formData?.risk_tolerance || 50),
-      pros: [`效率 ${item.efficiency_percent}%`, item.environmental_benefit],
-      cons:
-        typeof item.final_recommendation === "string" &&
-        item.final_recommendation.includes("觀望")
-          ? ["效率偏低", "建議保守評估"]
-          : [],
-      recommendation: item.explanation_text || "根據您的條件，我們建議採用此方案以獲得穩定報酬。",
+      matchScore: calculateCompatibility(
+        item.efficiency_percent,
+        data.formData?.risk_tolerance || 50
+      ),
     }))
-
-    transformed.sort((a: RecommendationResult, b: RecommendationResult) => b.matchScore - a.matchScore)
     setConverted(transformed)
   }, [])
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("zh-TW", {
-      style: "currency",
-      currency: "TWD",
-      minimumFractionDigits: 0,
-    }).format(amount)
+  useEffect(() => {
+    setConverted((prev) =>
+      [...prev].sort((a, b) => {
+        if (sortBy === "installationCost") return a.results.installationCost - b.results.installationCost
+        if (sortBy === "annualSavings") return b.results.annualSavings - a.results.annualSavings
+        if (sortBy === "efficiency_percent") return b.efficiency_percent - a.efficiency_percent
+        return b.matchScore - a.matchScore
+      })
+    )
+  }, [sortBy])
 
-  function calculateCompatibility(efficiencyPercent: number, riskTolerance: number): number {
-    const minEff = 16.5
-    const maxEff = 23.6
-    let normalizedEff = (efficiencyPercent - minEff) / (maxEff - minEff)
-    normalizedEff = Math.max(0, Math.min(1, normalizedEff))
-    const riskToleranceNormalized = riskTolerance / 100
-    const compatibilityScore = 1 - Math.abs(normalizedEff - riskToleranceNormalized)
-    return Math.round(compatibilityScore * 100 * 100) / 100
-  }
-
-  if (!Array.isArray(converted) || converted.length === 0) {
+  if (converted.length === 0) {
     return (
       <div className="p-6 text-gray-600 text-center">
         <p>尚無推薦資料，請先完成投資計算。</p>
@@ -136,135 +149,95 @@ export default function SmartRecommendation({ onRecommendationSelect, onSavePlan
     )
   }
 
-  const localDescription = converted[0]?.description || "尚無描述"
-
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader className="gap-1">
-          <CardTitle className="flex items-center space-x-2">
-            <Star className="h-5 w-5 mb-3" />
-            <span>為您推薦的方案</span>
-          </CardTitle>
-          <CardDescription>在此條件安裝太陽能板，{localDescription}</CardDescription>
-          <CardDescription>基於您的條件，我們為您精選了以下方案，按匹配度排序</CardDescription>
-        </CardHeader>
-      </Card>
+    <div>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader className="flex flex-row justify-between items-center">
+            <div className="space-y-2">
+              <CardTitle className="flex items-center space-x-2">
+                <Star className="h-5 w-5" />
+                <span>為您推薦的方案</span>
+              </CardTitle>
+              <CardDescription>
+                基於您的條件，我們為您精選了以下方案，按匹配度排序
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <PiFunnelBold className="w-5 h-5 text-muted-foreground" />
+              <Select defaultValue="matchScore" onValueChange={(value) => setSortBy(value)}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="排序方式" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="matchScore">匹配度</SelectItem>
+                  <SelectItem value="installationCost">安裝成本</SelectItem>
+                  <SelectItem value="annualSavings">年收益</SelectItem>
+                  <SelectItem value="efficiency_percent">效率</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardHeader>
+        </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {converted.map((rec, index) => (
-          <Card key={rec.id} className={index === 0 ? "ring-2 ring-orange-500" : ""}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center space-x-2">
-                  {index === 0 && <Star className="h-5 w-5 text-orange-500" />}
-                  <span>{rec.name}</span>
-                  <span className="text-sm text-gray-500 flex flex-col justify-end items-start space-y-0.5">{rec.module_name}</span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {converted.map((rec, index) => (
+            <Card key={rec.id} className={index === 0 ? "relative ring-2 ring-orange-500 z-10" : "relative z-10"}>
+              <CardHeader onClick={() => setSelectedChartPlan(rec)}>
+                <CardTitle className="flex justify-between items-center">
+                  <span className="flex items-center space-x-2">
+                    {index === 0 && <Star className="h-5 w-5 text-orange-500" />}
+                    <span>{rec.name}</span>
+                  </span>
+                  <Badge variant={rec.matchScore >= 80 ? "default" : rec.matchScore >= 60 ? "secondary" : "outline"}>
+                    匹配度 {rec.matchScore}%
+                  </Badge>
                 </CardTitle>
-                <Badge variant={rec.matchScore >= 80 ? "default" : rec.matchScore >= 60 ? "secondary" : "outline"}>
-                  匹配度 {rec.matchScore}%
-                </Badge>
-              </div>
-              {index === 0 && <Badge className="w-fit bg-orange-500">🏆 最佳推薦</Badge>}
-            </CardHeader>
-
-            <CardContent className="space-y-4">
-              <Progress value={rec.matchScore} className="h-2" />
-
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-600">模組種類</p>
-                  <p className="font-semibold break-words whitespace-pre-wrap">{rec.type}</p>
+                <CardDescription>{rec.module_name}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Progress value={rec.matchScore} className="h-2" />
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-600">模組效率</p>
+                    <p className="font-semibold">{rec.efficiency_percent}%</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">安裝成本</p>
+                    <p className="font-semibold">{formatCurrency(rec.results.installationCost)}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">年收益</p>
+                    <p className="font-semibold">{formatCurrency(rec.results.annualSavings)}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">20年獲益</p>
+                    <p className="font-semibold text-green-600">{formatCurrency(rec.results.totalProfit)}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-gray-600">模組效率</p>
-                  <p className="font-semibold">{rec.efficiency_percent} %</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">效率等級</p>
-                  <p className="font-semibold">{rec.efficiency_level}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">年收益</p>
-                  <p className="font-semibold">{formatCurrency(rec.results.annualSavings)}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">20年預估獲益</p>
-                  <p className="font-semibold">{formatCurrency(rec.results.totalProfit)}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">安裝成本</p>
-                  <p className="font-semibold">{formatCurrency(rec.results.installationCost)}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">回本年限</p>
-                  <p className="font-semibold">{rec.payback_years} 年</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">減碳效益</p>
-                  <p className="font-semibold">{rec.pros.find(p => p.includes("減碳"))}</p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="font-medium text-green-600">優勢</h4>
-                <ul className="text-sm space-y-1">
-                  {rec.pros.map((pro, i) => (
-                    <li key={i} className="flex items-center space-x-2">
-                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-                      <span>{pro}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {rec.cons.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="font-medium text-yellow-600">注意事項</h4>
-                  <ul className="text-sm space-y-1">
-                    {rec.cons.map((con, i) => (
-                      <li key={i} className="flex items-center space-x-2">
-                        <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full" />
-                        <span>{con}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {onRecommendationSelect && (
                 <Button
-                  onClick={() => onRecommendationSelect(rec)}
-                  className="w-full"
-                  variant={index === 0 ? "default" : "outline"}
+                  onClick={async () => {
+                    const response = await fetch("http://localhost:5001/api/llm_decision", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        module_name: rec.module_name,
+                        efficiency_percent: rec.efficiency_percent,
+                        efficiency_level: rec.efficiency_level,
+                        capacity_kw: rec.capacity_kw,
+                        address: rec.formData.location_city,
+                        annual_generation_kwh: rec.results.annualGeneration,
+                        install_cost_ntd: rec.results.installationCost,
+                        annual_revenue_ntd: rec.results.annualSavings,
+                        payback_years: rec.payback_years,
+                      }),
+                    })
+                    const data = await response.json()
+                    setAiResult((prev) => ({ ...prev, [rec.id]: data }))
+                  }}
+                  className="relative w-full z-20"
+                  variant="secondary"
                 >
-                  查看詳細分析
-                </Button>
-              )}
-
-              <Button
-                onClick={async () => {
-                  const response = await fetch("http://localhost:5001/api/llm_decision", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      module_name: rec.module_name,
-                      efficiency_percent: rec.efficiency_percent,
-                      efficiency_level: rec.efficiency_level,
-                      capacity_kw: rec.capacity_kw,
-                      address: rec.formData.location_city,
-                      annual_generation_kwh: rec.results.annualGeneration,
-                      install_cost_ntd: rec.results.installationCost,
-                      annual_revenue_ntd: rec.results.annualSavings,
-                      payback_years: rec.payback_years,
-                    }),
-                  })
-                  const data = await response.json()
-                  setAiResult((prev) => ({ ...prev, [rec.id]: data }))
-                }}
-                className="w-full"
-                variant="secondary"
-              >
                 🔍 AI 評估此方案
               </Button>
 
@@ -276,17 +249,7 @@ export default function SmartRecommendation({ onRecommendationSelect, onSavePlan
                   <p>說明：{aiResult[rec.id].explanation_text}</p>
                 </div>
               )}
-              <div className="flex gap-2">
-              {onRecommendationSelect && (
-                <Button
-                  onClick={() => onRecommendationSelect(rec)}
-                  className="w-full"
-                  variant={index === 0 ? "default" : "outline"}
-                >
-                  查看詳細分析
-                </Button>
-              )}
-              {onSavePlan && (
+              {/* {onSavePlan && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -296,58 +259,54 @@ export default function SmartRecommendation({ onRecommendationSelect, onSavePlan
                   <Save className="h-4 w-4" />
                   <span>保存方案</span>
                 </Button>
-              )}
-            </div>
-
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      {showSaveDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-96">
-            <CardHeader>
-              <CardTitle>保存投資方案</CardTitle>
-              <CardDescription>為這個方案命名，以便日後比較</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="planName">方案名稱</Label>
-                <Input
-                  id="planName"
-                  placeholder="例：我家屋頂方案"
-                  value={planName}
-                  onChange={(e) => setPlanName(e.target.value)}
-                />
-              </div>
-              <div className="flex space-x-2">
-                <Button
-                  onClick={() => {
-                    if (planName.trim() && onSavePlan) {
-                      onSavePlan(planName.trim(), converted[0])
-                      setPlanName("")
-                      setShowSaveDialog(false)
-                    }
-                  }}
-                  disabled={!planName.trim()}
-                  className="flex-1"
-                >
-                  保存
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowSaveDialog(false)
-                    setPlanName("")
-                  }}
-                  className="flex-1"
-                >
-                  取消
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              )} */}
+              </CardContent>
+            </Card>
+          ))}
         </div>
+        
+      </div>
+
+      {selectedChartPlan && (
+        <Dialog open={!!selectedChartPlan} onOpenChange={(open) => !open && setSelectedChartPlan(null)}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>{selectedChartPlan.name} 投資回報分析</DialogTitle>
+            </DialogHeader>
+            <Tabs defaultValue="chart" className="mt-4">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="chart">📊 投資圖表</TabsTrigger>
+                <TabsTrigger value="raw">📁 原始資料</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="chart">
+                <InvestmentChart
+                  installationCost={selectedChartPlan.results.installationCost}
+                  annualSavings={selectedChartPlan.results.annualSavings}
+                  paybackPeriod={selectedChartPlan.payback_years}
+                />
+              </TabsContent>
+
+              <TabsContent value="raw">
+                <div className="mt-4 grid grid-cols-2 gap-x-8 gap-y-4 text-sm text-gray-700">
+                  <div><strong>模組名稱：</strong>{selectedChartPlan.module_name}</div>
+                  <div><strong>品牌：</strong>{selectedChartPlan.name}</div>
+                  <div><strong>模組種類：</strong>{selectedChartPlan.type}</div>
+                  <div><strong>容量：</strong>{selectedChartPlan.capacity_kw} kW</div>
+                  <div><strong>日均發電量：</strong>{selectedChartPlan.daily_kwh_per_kw} kWh/kW</div>
+                  <div><strong>效率：</strong>{selectedChartPlan.efficiency_percent}% ({selectedChartPlan.efficiency_level})</div>
+                  <div><strong>購電費率：</strong>{selectedChartPlan.fit_rate_total} 元/kWh</div>
+                  <div><strong>年收益：</strong>{formatCurrency(selectedChartPlan.results.annualSavings)}</div>
+                  <div><strong>安裝成本：</strong>{formatCurrency(selectedChartPlan.results.installationCost)}</div>
+                  <div><strong>預估回本：</strong>{selectedChartPlan.payback_years} 年</div>
+                </div>
+              </TabsContent>
+            </Tabs>
+            <DialogClose asChild>
+              <Button variant="outline" className="mt-4 w-full">關閉</Button>
+            </DialogClose>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   )
