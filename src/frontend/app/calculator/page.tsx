@@ -537,13 +537,13 @@ export default function SolarCalculatorPage() {
             <SmartRecommendation onSavePlan={savePlan} />
           </TabsContent>
 
-          {/* <TabsContent value="compare">
+          <TabsContent value="compare">
             <PlanComparison 
-              savedPlans={savedPlans} 
-              onDeletePlan={handleDeletePlan}
-              onSelectPlan={handleSelectPlan}
+              // savedPlans={savedPlans} 
+              // onDeletePlan={handleDeletePlan}
+              // onSelectPlan={handleSelectPlan}
             />
-          </TabsContent> */}
+          </TabsContent>
         </Tabs>
       </main>
     </div>

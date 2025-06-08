@@ -50,11 +50,13 @@ interface SmartRecommendationProps {
   onSavePlan?: (planName: string, planData: RecommendationResult) => void
 }
 
+
 export default function SmartRecommendation({
   onRecommendationSelect,
   onSavePlan,
 }: SmartRecommendationProps) {
   const [showSaveDialog, setShowSaveDialog] = useState(false)
+  const [showContactDialog, setShowContactDialog] = useState(false)
   const [planName, setPlanName] = useState("")
   const [converted, setConverted] = useState<RecommendationResult[]>([])
   const [selectedChartPlan, setSelectedChartPlan] = useState<RecommendationResult | null>(null)
@@ -240,6 +242,26 @@ export default function SmartRecommendation({
                 >
                 🔍 AI 評估此方案
               </Button>
+              <div className="flex flex-row1 gap-4 mt-2 text-sm text-gray-600">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowSaveDialog(true)}
+                  className="flex items-center space-x-2"
+                >
+                  <span>保存方案</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {setSelectedChartPlan(rec)
+                                  setShowContactDialog(true)}}
+                  className="flex items-center space-x-2 w-full"
+                >
+                  <span>聯絡廠商</span>
+                </Button>
+              </div>
+              
 
               {aiResult[rec.id] && (
                 <div className="text-sm mt-2 bg-yellow-50 border border-yellow-300 p-2 rounded">
@@ -308,6 +330,27 @@ export default function SmartRecommendation({
           </DialogContent>
         </Dialog>
       )}
+      {showContactDialog && selectedChartPlan && (
+        <Dialog open={showContactDialog} onOpenChange={(open) => !open && setShowContactDialog(false)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>聯絡 {selectedChartPlan.name} 廠商資訊</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 text-sm text-gray-700">
+              <p><strong>模組名稱：</strong>{selectedChartPlan.module_name}</p>
+              <p><strong>品牌：</strong>{selectedChartPlan.name}</p>
+              <p><strong>模組類型：</strong>{selectedChartPlan.type}</p>
+              <p><strong>容量：</strong>{selectedChartPlan.capacity_kw} kW</p>
+              <p><strong>聯絡信箱：</strong>{`support_${selectedChartPlan.name.toLowerCase().replace(/\s/g, "")}_${Math.random().toString(36).substring(2, 7)}@solarcloud.ai`}</p>
+              <p><strong>客服電話：</strong>+886-800-{Math.floor(100000 + Math.random() * 900000)}</p>
+            </div>
+            <DialogClose asChild>
+              <Button variant="outline" className="mt-4 w-full">關閉</Button>
+            </DialogClose>
+          </DialogContent>
+        </Dialog>
+      )}
+
     </div>
   )
 }

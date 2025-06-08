@@ -57,12 +57,10 @@ export default function HomePage() {
         <div className="relative z-10 max-w-md w-full space-y-8">
           <div className="text-center space-y-4">
             <div className="flex justify-center">
-              
               <img src="/logo.png" alt="logo" className="h-25 w-25" />
-
-
             </div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">陽光下的智慧決策</h1>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2" style={{ fontFamily: 'NOTO' }}>陽光下的智慧決策</h1>
+            
             <p className="text-lg text-gray-600">SDG 7 - 可負擔與潔淨能源</p>
             <p className="text-sm text-gray-500 mt-2">Smarter Solar Starts Here!</p>
           </div>
